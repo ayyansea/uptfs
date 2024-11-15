@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bufio"
@@ -6,16 +6,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"uptfs/internal/config"
-	"uptfs/internal/split"
+	"uptfs/util/split"
 )
 
-const filepath = ""
-
-func main() {
-	var config config.Config
-	config.LoadConfig(filepath)
-
+func Run() {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	inputString := scanner.Text()
@@ -30,7 +24,28 @@ func main() {
 	tokens := strings.Split(inputString, " ")
 	tokens = formatInput(tokens, additionalDelimeters)
 
-	fmt.Println(tokens)
+	lowercaseFilter := NewLowercaseFilterWithExtraSteps()
+	lowercaseFilter.Greet()
+
+	var newTokens []string
+	for _, token := range tokens {
+		newTokens = append(newTokens, lowercaseFilter.Filter(token))
+	}
+
+	tokens = newTokens
+
+	uppercaseFilter := NewUppercaseFilter()
+	uppercaseFilter.Greet()
+
+	newTokens = nil
+	for _, token := range tokens {
+		newTokens = append(newTokens, uppercaseFilter.Filter(token))
+	}
+
+	result := strings.Join(newTokens, " ")
+
+	fmt.Println("")
+	fmt.Println(result)
 }
 
 func formatInput(tokenArray []string, delimeterArray []string) []string {

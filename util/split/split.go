@@ -23,6 +23,7 @@ func NewArrayWithSplit(initialArray []string, index int, token string, delimeter
 		Here we check if it is so and essentialy remove that token
 		from resulting array.
 	*/
+
 	splitIsEmpty := checkArrayElementsEmpty(split)
 	if splitIsEmpty {
 		result = append(initialArray[:index], initialArray[index+1:]...)

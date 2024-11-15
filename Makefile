@@ -1,4 +1,4 @@
-BINARY_DIR=./cmd/uptfs
+BINARY_DIR=./cmd
 
 .PHONY: all
 all: build
@@ -6,7 +6,7 @@ all: build
 .PHONY: build
 build:
 	@echo "Building Go uptfs..."
-	go build $(BINARY_DIR)
+	go build
 
 .PHONY: clean
 clean:
