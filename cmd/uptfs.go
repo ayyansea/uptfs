@@ -24,28 +24,25 @@ func Run() {
 	tokens := strings.Split(inputString, " ")
 	tokens = formatInput(tokens, additionalDelimeters)
 
+	if len(tokens) == 0 {
+		err := errors.New("the slice is empty")
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	var linkedTokens LinkedTokenList
+	SliceToLinkedTokenSlice(tokens, &linkedTokens)
+
 	lowercaseFilter := NewLowercaseFilterWithExtraSteps()
-	lowercaseFilter.Greet()
-
-	var newTokens []string
-	for _, token := range tokens {
-		newTokens = append(newTokens, lowercaseFilter.Filter(token))
-	}
-
-	tokens = newTokens
-
 	uppercaseFilter := NewUppercaseFilter()
-	uppercaseFilter.Greet()
 
-	newTokens = nil
-	for _, token := range tokens {
-		newTokens = append(newTokens, uppercaseFilter.Filter(token))
+	for current := linkedTokens.head; current != nil; current = current.GetNextToken() {
+		current.content = lowercaseFilter.Filter(current.content)
+		current.content = uppercaseFilter.Filter(current.content)
 	}
 
-	result := strings.Join(newTokens, " ")
-
-	fmt.Println("")
-	fmt.Println(result)
+	fmt.Println("Head: ", linkedTokens.head.content)
+	fmt.Println("Tail: ", linkedTokens.tail.content)
 }
 
 func formatInput(tokenArray []string, delimeterArray []string) []string {
