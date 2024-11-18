@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/alexflint/go-arg"
@@ -14,13 +15,48 @@ import (
 )
 
 var args struct {
-	Foo string `help:"it's a foo"`
-	Bar bool   `help:"it's a bar"`
+	ConfigFile string   `arg:"-c" help:"path to config file" default:""`
+	InputFile  string   `arg:"-i" help:"path to input file" default:""`
+	OutputFile string   `arg:"-o" help:"path to output file" default:""`
+	Filters    []string `arg:"-f" help:"list of filters" default:""`
+}
+
+func errExit(err error) {
+	fmt.Println(err)
+	os.Exit(1)
 }
 
 func main() {
 	arg.MustParse(&args)
-	fmt.Println(args.Foo, args.Bar)
+
+	var configFilePath, inputFilePath, outFilePath string
+	var err error
+
+	if args.ConfigFile != "" {
+		configFilePath, err = filepath.Abs(args.ConfigFile)
+	}
+	if err != nil {
+		errExit(err)
+	}
+
+	if args.InputFile != "" {
+		inputFilePath, err = filepath.Abs(args.InputFile)
+	}
+	if err != nil {
+		errExit(err)
+	}
+
+	if args.OutputFile != "" {
+		outFilePath, err = filepath.Abs(args.OutputFile)
+	}
+	if err != nil {
+		errExit(err)
+	}
+
+	fmt.Printf("%v %v %v\n",
+		configFilePath,
+		inputFilePath,
+		outFilePath)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -52,9 +88,4 @@ func main() {
 		current.SetContent(lowercaseFilter.Filter(current.GetContent()))
 		current.SetContent(uppercaseFilter.Filter(current.GetContent()))
 	}
-
-	head := linkedTokens.GetHead()
-	tail := linkedTokens.GetTail()
-	fmt.Println("Head: ", head.GetContent())
-	fmt.Println("Tail: ", tail.GetContent())
 }
