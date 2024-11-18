@@ -6,7 +6,7 @@ all: build
 .PHONY: build
 build:
 	@echo "Building Go uptfs..."
-	go build
+	go build ./cmd/uptfs
 
 .PHONY: clean
 clean:

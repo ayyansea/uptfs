@@ -4,6 +4,16 @@ import (
 	"strings"
 )
 
+func FormatInput(tokenArray []string, delimeterArray []string) []string {
+	for _, delimeter := range delimeterArray {
+		for index, element := range tokenArray {
+			tokenArray = NewArrayWithSplit(tokenArray, index, element, delimeter)
+		}
+	}
+
+	return tokenArray
+}
+
 func checkArrayElementsEmpty(array []string) bool {
 	for _, str := range array {
 		if str != "" {

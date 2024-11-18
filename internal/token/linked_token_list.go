@@ -1,7 +1,15 @@
-package cmd
+package token
 
 type LinkedTokenList struct {
 	head, tail *Token
+}
+
+func (lts *LinkedTokenList) GetHead() *Token {
+	return lts.head
+}
+
+func (lts *LinkedTokenList) GetTail() *Token {
+	return lts.tail
 }
 
 func (lts *LinkedTokenList) AddToken(content string) {
