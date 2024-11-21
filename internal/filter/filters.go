@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-var filterList = map[string]interface{}{
+var FilterList = map[string]func() Filter{
 	"uppercase":       NewUppercaseFilter,
 	"lowercase":       NewLowercaseFilter,
 	"lowercase_extra": NewLowercaseFilterWithExtraSteps,
