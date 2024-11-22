@@ -69,6 +69,6 @@ func main() {
 			filter := filter.FilterList[filterName]()
 			current.SetContent(filter.Filter(current.GetContent()))
 		}
+		fmt.Println(current.GetContent())
 	}
-
 }
