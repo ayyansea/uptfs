@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+	"slices"
 
 	"github.com/alexflint/go-arg"
 	"github.com/ayyansea/uptfs/internal/config"
 	"github.com/ayyansea/uptfs/internal/filter"
-	"github.com/ayyansea/uptfs/internal/split"
 	"github.com/ayyansea/uptfs/internal/token"
 )
 
@@ -39,7 +38,6 @@ func main() {
 
 	var config config.Config
 	config.LoadConfig(configFilePath)
-	fmt.Printf("Config: %v\n", config)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -51,24 +49,45 @@ func main() {
 		os.Exit(1)
 	}
 
-	additionalDelimeters := []string{",", "."}
-	tokens := strings.Split(inputString, " ")
-	tokens = split.FormatInput(tokens, additionalDelimeters)
+	additionalDelimeters := []string{",", ".", " "}
+	tempword := ""
+	var tokenlist token.LinkedTokenList
 
-	if len(tokens) == 0 {
-		err := errors.New("the slice is empty")
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
+	for index, character := range inputString {
+		if slices.Contains(additionalDelimeters, string(character)) {
+			if len(tempword) != 0 {
+				for _, filterName := range config.Filters {
+					currentfilter := filter.FilterList[filterName]()
+					tempword = currentfilter.Filter(tempword)
+				}
+				tokenlist.AddToken(tempword)
+				tokenlist.AddToken(string(character))
+				tempword = ""
 
-	var linkedTokens token.LinkedTokenList
-	token.SliceToLinkedTokenSlice(tokens, &linkedTokens)
+				continue
+			}
+			tokenlist.AddToken(string(character))
+			tempword = ""
 
-	for current := linkedTokens.GetHead(); current != nil; current = current.GetNextToken() {
-		for _, filterName := range config.Filters {
-			filter := filter.FilterList[filterName]()
-			current.SetContent(filter.Filter(current.GetContent()))
+			continue
 		}
-		fmt.Println(current.GetContent())
+
+		tempword = tempword + string(character)
+		if index == len(inputString)-1 {
+			for _, filterName := range config.Filters {
+				currentfilter := filter.FilterList[filterName]()
+				tempword = currentfilter.Filter(tempword)
+			}
+			tokenlist.AddToken(tempword)
+			tempword = ""
+		}
 	}
+
+	result := ""
+
+	for current := tokenlist.GetHead(); current != nil; current = current.GetNextToken() {
+		result = result + current.GetContent()
+	}
+
+	fmt.Println(result)
 }

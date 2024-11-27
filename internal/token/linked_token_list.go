@@ -28,9 +28,3 @@ func (lts *LinkedTokenList) AddToken(content string) {
 		lts.tail = newToken
 	}
 }
-
-func SliceToLinkedTokenSlice(slice []string, tokenSlice *LinkedTokenList) {
-	for _, item := range slice {
-		tokenSlice.AddToken(item)
-	}
-}
