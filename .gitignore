@@ -30,3 +30,6 @@ uptfs
 
 # config
 config.yaml
+
+# temporary vim files
+**/*.swp
