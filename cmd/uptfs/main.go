@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -48,16 +47,10 @@ func main() {
 	var config config.Config
 	config.LoadConfig(configFilePath)
 
-	var inputString string
+	var inputStrings []string
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		inputString = inputString + scanner.Text()
-	}
-
-	if inputString == "" {
-		err := errors.New("the input string is empty")
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
+		inputStrings = append(inputStrings, scanner.Text())
 	}
 
 	additionalDelimeters := []string{",", ".", " "}
@@ -71,14 +64,47 @@ func main() {
 	slog.Debug("delimeters: " + delimeterString)
 
 	tempword := ""
+	var tokenizedInputSlice []token.LinkedTokenList
 	var tokenlist token.LinkedTokenList
 
-	for index, character := range inputString {
-		slog.Debug("current character: " + string(character))
-		if slices.Contains(additionalDelimeters, string(character)) {
-			slog.Debug("current character is a delimeter")
-			if len(tempword) != 0 {
-				slog.Debug("word is longer than 0 characters, filtering it")
+	for _, elem := range inputStrings {
+		for index, character := range elem {
+			slog.Debug("current character: " + string(character))
+			if slices.Contains(additionalDelimeters, string(character)) {
+				slog.Debug("current character is a delimeter")
+				if len(tempword) != 0 {
+					slog.Debug("word is longer than 0 characters, filtering it")
+					for _, filterName := range config.Filters {
+						_, ok := filter.FilterList[filterName]
+						if ok {
+							slog.Debug("using filter " + filterName)
+							currentfilter := filter.FilterList[filterName]()
+							tempword = currentfilter.Filter(tempword)
+						} else {
+							slog.Debug("there's no filter named " + filterName)
+							continue
+						}
+					}
+					slog.Debug("filtered word: " + tempword)
+					tokenlist.AddToken(tempword)
+					slog.Debug("adding delimeter")
+					tokenlist.AddToken(string(character))
+					slog.Debug("resetting current word to an empty string")
+					tempword = ""
+
+					continue
+				}
+				slog.Debug("current word is a zero-length string")
+				slog.Debug("adding delimeter")
+				tokenlist.AddToken(string(character))
+				tempword = ""
+
+				continue
+			}
+			slog.Debug("current character is not a delimeter, adding to word")
+			tempword = tempword + string(character)
+			if index == len(elem)-1 {
+				slog.Debug("string ended, filtering current word")
 				for _, filterName := range config.Filters {
 					_, ok := filter.FilterList[filterName]
 					if ok {
@@ -92,48 +118,22 @@ func main() {
 				}
 				slog.Debug("filtered word: " + tempword)
 				tokenlist.AddToken(tempword)
-				slog.Debug("adding delimeter")
-				tokenlist.AddToken(string(character))
-				slog.Debug("resetting current word to an empty string")
 				tempword = ""
-
-				continue
 			}
-			slog.Debug("current word is a zero-length string")
-			slog.Debug("adding delimeter")
-			tokenlist.AddToken(string(character))
-			tempword = ""
-
-			continue
 		}
-		slog.Debug("current character is not a delimeter, adding to word")
-		tempword = tempword + string(character)
-		if index == len(inputString)-1 {
-			slog.Debug("string ended, filtering current word")
-			for _, filterName := range config.Filters {
-				_, ok := filter.FilterList[filterName]
-				if ok {
-					slog.Debug("using filter " + filterName)
-					currentfilter := filter.FilterList[filterName]()
-					tempword = currentfilter.Filter(tempword)
-				} else {
-					slog.Debug("there's no filter named " + filterName)
-					continue
-				}
-			}
-			slog.Debug("filtered word: " + tempword)
-			tokenlist.AddToken(tempword)
-			tempword = ""
-		}
+		tokenizedInputSlice = append(tokenizedInputSlice, tokenlist)
+		tokenlist.Clear()
 	}
 
 	result := ""
 
-	for current := tokenlist.GetHead(); current != nil; current = current.GetNextToken() {
-		result = result + current.GetContent()
+	for _, elem := range tokenizedInputSlice {
+		for current := elem.GetHead(); current != nil; current = current.GetNextToken() {
+			result = result + current.GetContent()
+		}
+		fmt.Println(result)
+		result = ""
 	}
-
-	fmt.Println(result)
 
 	slog.Debug("uptfs finished")
 }
