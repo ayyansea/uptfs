@@ -15,8 +15,9 @@ import (
 )
 
 var args struct {
-	ConfigFile string `arg:"-c" help:"path to config file" default:""`
-	Verbose    bool   `arg:"-v" help:"toggle verbose (debug) mode"`
+	ConfigFile string   `arg:"-c" help:"path to config file" default:""`
+	Verbose    bool     `arg:"-v" help:"toggle verbose (debug) mode"`
+	Filter     []string `arg:"-f,separate" help:"name of a filter that will be applied to text, can be specified multiple times"`
 }
 
 func errExit(err error) {
@@ -34,18 +35,20 @@ func main() {
 	slog.Debug("uptfs started")
 
 	var configFilePath string
+
+	var config config.Config
 	var err error
 
 	if args.ConfigFile != "" {
 		configFilePath, err = filepath.Abs(args.ConfigFile)
+		config.LoadConfig(configFilePath)
 		slog.Debug("config file path: " + configFilePath)
 	}
 	if err != nil {
-		errExit(err)
+		slog.Error(err.Error())
 	}
 
-	var config config.Config
-	config.LoadConfig(configFilePath)
+	config.Filters = append(config.Filters, args.Filter...)
 
 	var inputStrings []string
 	scanner := bufio.NewScanner(os.Stdin)
