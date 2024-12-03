@@ -12,6 +12,11 @@ func (lts *LinkedTokenList) GetTail() *Token {
 	return lts.tail
 }
 
+func (lts *LinkedTokenList) Clear() {
+	lts.head = nil
+	lts.tail = nil
+}
+
 func (lts *LinkedTokenList) AddToken(content string) {
 	newToken := &Token{
 		content: content,
