@@ -20,11 +20,6 @@ var args struct {
 	Filter     []string `arg:"-f,separate" help:"name of a filter that will be applied to text, can be specified multiple times"`
 }
 
-func errExit(err error) {
-	fmt.Println(err)
-	os.Exit(1)
-}
-
 func main() {
 	arg.MustParse(&args)
 
