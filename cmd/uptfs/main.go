@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/alexflint/go-arg"
 	"github.com/ayyansea/uptfs/internal/config"
@@ -17,6 +18,7 @@ import (
 var args struct {
 	ConfigFile string   `arg:"-c" help:"path to config file" default:""`
 	Verbose    bool     `arg:"-v" help:"toggle verbose (debug) mode"`
+	InputFile  string   `arg:"-i" help:"name of input file to read text from"`
 	Filter     []string `arg:"-f,separate" help:"name of a filter that will be applied to text, can be specified multiple times"`
 }
 
@@ -45,10 +47,26 @@ func main() {
 
 	config.Filters = append(config.Filters, args.Filter...)
 
+	var scanner *bufio.Scanner
+	var inputFileData []byte
 	var inputStrings []string
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		inputStrings = append(inputStrings, scanner.Text())
+
+	if len(args.InputFile) > 0 {
+		inputFilePath, _ := filepath.Abs(args.InputFile)
+		inputFileData, err = os.ReadFile(inputFilePath)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		scanner = bufio.NewScanner(strings.NewReader(string(inputFileData)))
+		for scanner.Scan() {
+			inputStrings = append(inputStrings, scanner.Text())
+		}
+	} else {
+		scanner = bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			inputStrings = append(inputStrings, scanner.Text())
+		}
 	}
 
 	additionalDelimeters := []string{",", ".", " "}
