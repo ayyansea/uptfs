@@ -19,6 +19,7 @@ var args struct {
 	ConfigFile string   `arg:"-c" help:"path to config file" default:""`
 	Verbose    bool     `arg:"-v" help:"toggle verbose (debug) mode"`
 	InputFile  string   `arg:"-i" help:"name of input file to read text from"`
+	OutputFile string   `arg:"-o" help:"name of output file to write text to"`
 	Filter     []string `arg:"-f,separate" help:"name of a filter that will be applied to text, can be specified multiple times"`
 }
 
@@ -141,14 +142,34 @@ func main() {
 		tokenlist.Clear()
 	}
 
-	result := ""
+	if len(args.OutputFile) > 0 {
+		var result []byte
 
-	for _, elem := range tokenizedInputSlice {
-		for current := elem.GetHead(); current != nil; current = current.GetNextToken() {
-			result = result + current.GetContent()
+		outputFilePath, _ := filepath.Abs(args.OutputFile)
+		os.Create(outputFilePath)
+
+		for _, elem := range tokenizedInputSlice {
+			for current := elem.GetHead(); current != nil; current = current.GetNextToken() {
+				result = append(result, []byte(current.GetContent())...)
+			}
+			result = append(result, []byte("\n")...)
+			f, _ := os.OpenFile(outputFilePath, os.O_APPEND|os.O_WRONLY, 0644)
+			defer f.Close()
+			if _, err = f.Write(result); err != nil {
+				panic(err)
+			}
+			result = []byte("")
 		}
-		fmt.Println(result)
-		result = ""
+	} else {
+		var result string
+
+		for _, elem := range tokenizedInputSlice {
+			for current := elem.GetHead(); current != nil; current = current.GetNextToken() {
+				result = result + current.GetContent()
+			}
+			fmt.Println(result)
+			result = ""
+		}
 	}
 
 	slog.Debug("uptfs finished")
